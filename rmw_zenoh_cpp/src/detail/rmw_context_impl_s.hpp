@@ -24,6 +24,7 @@
 
 #include "graph_cache.hpp"
 #include "rmw_node_data.hpp"
+#include "buffer_pool.hpp"
 
 #include "rmw/ret_types.h"
 #include "rmw/types.h"
@@ -91,6 +92,9 @@ public:
 
   // Forward declaration
   class Data;
+
+  // Pool of serialization buffers.
+  rmw_zenoh_cpp::BufferPool serialization_buffer_pool;
 
 private:
   std::shared_ptr<Data> data_{nullptr};
