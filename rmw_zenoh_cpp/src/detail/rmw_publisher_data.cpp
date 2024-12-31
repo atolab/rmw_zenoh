@@ -113,7 +113,8 @@ std::shared_ptr<PublisherData> PublisherData::make(
 
   // Create a Publication Cache if durability is transient_local.
   if (adapted_qos_profile.durability == RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL) {
-    adv_pub_opts.cache = zenoh::ext::SessionExt::AdvancedPublisherOptions::CacheOptions::create_default();
+    adv_pub_opts.cache =
+      zenoh::ext::SessionExt::AdvancedPublisherOptions::CacheOptions::create_default();
     adv_pub_opts.cache->max_samples = adapted_qos_profile.depth;
   }
 

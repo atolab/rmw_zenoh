@@ -182,7 +182,8 @@ bool SubscriptionData::init()
   // as we start supporting more qos settings.
   if (entity_->topic_info()->qos_.durability == RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL) {
     adv_sub_opts.query_timeout_ms = std::numeric_limits<uint64_t>::max();
-    adv_sub_opts.history = zenoh::ext::SessionExt::AdvancedSubscriberOptions::HistoryOptions::create_default();
+    adv_sub_opts.history =
+      zenoh::ext::SessionExt::AdvancedSubscriberOptions::HistoryOptions::create_default();
     adv_sub_opts.history->detect_late_publishers = true;
     adv_sub_opts.history->max_samples = entity_->topic_info()->qos_.depth;
     adv_sub_opts.recovery = zenoh::ext::SessionExt::AdvancedSubscriberOptions::RecoveryOptions{};
@@ -216,7 +217,7 @@ bool SubscriptionData::init()
           get_system_time_in_ns(),
           std::move(attachment_data)),
         std::string(sample.get_keyexpr().as_string_view()));
-  };
+    };
   sub_ = context_impl->session()->ext().declare_advanced_subscriber(
     sub_ke,
     on_sample,
