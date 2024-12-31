@@ -95,8 +95,7 @@ private:
     const rmw_node_t * rmw_node,
     std::shared_ptr<liveliness::Entity> entity,
     std::shared_ptr<zenoh::Session> session,
-    zenoh::Publisher pub,
-    std::optional<zenoh::ext::PublicationCache> pub_cache,
+    zenoh::ext::AdvancedPublisher pub,
     zenoh::LivelinessToken token,
     const void * type_support_impl,
     std::unique_ptr<MessageTypeSupport> type_support);
@@ -111,10 +110,8 @@ private:
   std::shared_ptr<liveliness::Entity> entity_;
   // A shared session.
   std::shared_ptr<zenoh::Session> sess_;
-  // An owned publisher.
-  zenoh::Publisher pub_;
-  // Optional publication cache when durability is transient_local.
-  std::optional<zenoh::ext::PublicationCache> pub_cache_;
+  // An owned AdvancedPublisher.
+  zenoh::ext::AdvancedPublisher pub_;
   // Liveliness token for the publisher.
   std::optional<zenoh::LivelinessToken> token_;
   // Type support fields

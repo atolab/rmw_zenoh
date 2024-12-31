@@ -1253,38 +1253,4 @@ void GraphCache::update_event_counters(
     }
   }
 }
-
-///=============================================================================
-void GraphCache::set_querying_subscriber_callback(
-  const std::string & sub_keyexpr,
-  const std::size_t sub_keyxpr_hash,
-  QueryingSubscriberCallback cb)
-{
-  std::unordered_map<
-    std::string,
-    std::unordered_map<std::size_t, QueryingSubscriberCallback>
-  >::iterator cb_it = querying_subs_cbs_.find(sub_keyexpr);
-  if (cb_it == querying_subs_cbs_.end()) {
-    querying_subs_cbs_[sub_keyexpr] =
-      std::unordered_map<std::size_t, QueryingSubscriberCallback>{};
-    cb_it = querying_subs_cbs_.find(sub_keyexpr);
-  }
-  cb_it->second.insert(std::make_pair(sub_keyxpr_hash, std::move(cb)));
-}
-
-///=============================================================================
-void GraphCache::remove_querying_subscriber_callback(
-  const std::string & sub_keyexpr,
-  const std::size_t sub_keyexpr_hash)
-{
-  std::unordered_map<
-    std::string,
-    std::unordered_map<std::size_t, QueryingSubscriberCallback>
-  >::iterator cb_map_it = querying_subs_cbs_.find(sub_keyexpr);
-  if (cb_map_it == querying_subs_cbs_.end()) {
-    return;
-  }
-  cb_map_it->second.erase(sub_keyexpr_hash);
-}
-
 }  // namespace rmw_zenoh_cpp

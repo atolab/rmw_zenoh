@@ -189,15 +189,6 @@ public:
   /// Returns true if the entity is a publisher or client. False otherwise.
   static bool is_entity_pub(const liveliness::Entity & entity);
 
-  void set_querying_subscriber_callback(
-    const std::string & sub_keyexpr,
-    const std::size_t sub_keyexpr_hash,
-    QueryingSubscriberCallback cb);
-
-  void remove_querying_subscriber_callback(
-    const std::string & sub_keyexpr,
-    const std::size_t sub_keyexpr_hash);
-
 private:
   // Helper function to convert an Entity into a GraphNode.
   // Note: this will update bookkeeping variables in GraphCache.
