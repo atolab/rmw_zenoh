@@ -78,17 +78,15 @@ BufferPool::Buffer BufferPool::allocate(size_t size)
       size_t size_diff = size - buffer.size;
       if (size_ + size_diff > max_size_) {
         return {};
-      } else {
-        size_ += size_diff;
       }
       uint8_t * data = static_cast<uint8_t *>(allocator.reallocate(
           buffer.data, size, allocator.state));
       if (data == nullptr) {
         return {};
-      } else {
-        buffer.data = data;
-        buffer.size = size;
       }
+      size_ += size_diff;
+      buffer.data = data;
+      buffer.size = size;
     }
     return buffer;
   }
