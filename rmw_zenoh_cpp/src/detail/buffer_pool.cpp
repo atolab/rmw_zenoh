@@ -36,6 +36,8 @@ BufferPool::BufferPool()
       "rmw_zenoh_cpp",
       "Unable to read maximum buffer pool size, falling back to default.");
     max_size_ = DEFAULT_MAX_SIZE;
+  } else if (strcmp(env_value, "") == 0) {
+    max_size_ = DEFAULT_MAX_SIZE;
   } else {
     max_size_ = std::atoll(env_value);
   }
