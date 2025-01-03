@@ -229,7 +229,7 @@ rmw_ret_t PublisherData::publish(
   if (serialization_buffer.data == nullptr) {
     void * data = allocator.allocate(max_data_length, allocator.state);
     RMW_CHECK_FOR_NULL_WITH_MSG(
-      msg_bytes, "failed to allocate serialization buffer", return RMW_RET_BAD_ALLOC);
+      data, "failed to allocate serialization buffer", return RMW_RET_BAD_ALLOC);
     msg_bytes = static_cast<uint8_t *>(data);
   } else {
     msg_bytes = serialization_buffer.data;
