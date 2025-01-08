@@ -36,7 +36,7 @@ ament_export_dependencies(zenohc)
 # - https://github.com/eclipse-zenoh/zenoh-cpp/pull/363 (Fix memory leak in string deserialization)
 ament_vendor(zenoh_cpp_vendor
   VCS_URL https://github.com/eclipse-zenoh/zenoh-cpp
-  VCS_VERSION 8dce692942246448a9e64f3bae68793634792c33
+  VCS_VERSION 9ca8cc170e6880de65e3efe17699617299ce42f6
   CMAKE_ARGS
     -DZENOHCXX_ZENOHC=OFF
 )
