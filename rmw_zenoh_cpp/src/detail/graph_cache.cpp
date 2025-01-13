@@ -384,20 +384,6 @@ void GraphCache::parse_put(
   // Otherwise, the entity represents a node that already exists in the graph.
   // Update topic info if required below.
   update_topic_maps_for_put(node_it->second, entity);
-
-  // If the newly added entity is a publisher with transient_local qos durability,
-  // we trigger any registered querying subscriber callbacks.
-  if (entity->type() == liveliness::EntityType::Publisher &&
-    entity->topic_info().has_value() &&
-    entity->topic_info()->qos_.durability == RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
-  {
-    auto sub_cbs_it = querying_subs_cbs_.find(entity->topic_info()->topic_keyexpr_);
-    if (sub_cbs_it != querying_subs_cbs_.end()) {
-      for (auto sub_it = sub_cbs_it->second.begin(); sub_it != sub_cbs_it->second.end(); ++sub_it) {
-        sub_it->second(entity->zid());
-      }
-    }
-  }
 }
 
 ///=============================================================================
