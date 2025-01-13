@@ -22,7 +22,7 @@ set(ZENOHC_CARGO_FLAGS "--no-default-features$<SEMICOLON>--features=shared-memor
 # - https://github.com/eclipse-zenoh/zenoh/pull/1696 (Fix SHM Garbage Collection (GC) policy)
 ament_vendor(zenoh_c_vendor
   VCS_URL https://github.com/eclipse-zenoh/zenoh-c.git
-  VCS_VERSION 85ca060fa4037239ca4102a3a61f96626cc6b434
+  VCS_VERSION 61d8fcc136ce4ed36d921a32244da4f3d81a6097
   CMAKE_ARGS
     "-DZENOHC_CARGO_FLAGS=${ZENOHC_CARGO_FLAGS}"
     "-DZENOHC_BUILD_WITH_UNSTABLE_API=TRUE"
@@ -36,7 +36,7 @@ ament_export_dependencies(zenohc)
 # - https://github.com/eclipse-zenoh/zenoh-cpp/pull/363 (Fix memory leak in string deserialization)
 ament_vendor(zenoh_cpp_vendor
   VCS_URL https://github.com/eclipse-zenoh/zenoh-cpp
-  VCS_VERSION 9ca8cc170e6880de65e3efe17699617299ce42f6
+  VCS_VERSION 05942637c29d3346ad18bab5a178aeebf4be5d62
   CMAKE_ARGS
     -DZENOHCXX_ZENOHC=OFF
 )
