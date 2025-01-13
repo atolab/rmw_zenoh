@@ -174,14 +174,16 @@ bool SubscriptionData::init()
   sess_ = context_impl->session();
 
   auto adv_sub_opts = zenoh::ext::SessionExt::AdvancedSubscriberOptions::create_default();
-  adv_sub_opts.subscriber_detection = true;
 
   // Instantiate the subscription with suitable options depending on the
   // adapted_qos_profile.
   // TODO(Yadunund): Rely on a separate function to return the sub
   // as we start supporting more qos settings.
   if (entity_->topic_info()->qos_.durability == RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL) {
+    // Allow this subscriber to be detected through liveliness.
+    adv_sub_opts.subscriber_detection = true;
     adv_sub_opts.query_timeout_ms = std::numeric_limits<uint64_t>::max();
+    // History can only be retransmitted by Publishers that enable caching.
     adv_sub_opts.history =
       zenoh::ext::SessionExt::AdvancedSubscriberOptions::HistoryOptions::create_default();
     adv_sub_opts.history->detect_late_publishers = true;

@@ -108,11 +108,13 @@ std::shared_ptr<PublisherData> PublisherData::make(
   }
 
   auto adv_pub_opts = zenoh::ext::SessionExt::AdvancedPublisherOptions::create_default();
-  adv_pub_opts.publisher_detection = true;
-  adv_pub_opts.sample_miss_detection = true;
 
   // Create a Publication Cache if durability is transient_local.
   if (adapted_qos_profile.durability == RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL) {
+    // Retransmission can only be done if history is enabled on subscriber side.
+    adv_pub_opts.publisher_detection = true;
+    // Allow this publisher to be detected through liveliness.
+    adv_pub_opts.sample_miss_detection = true;
     adv_pub_opts.cache =
       zenoh::ext::SessionExt::AdvancedPublisherOptions::CacheOptions::create_default();
     adv_pub_opts.cache->max_samples = adapted_qos_profile.depth;
