@@ -234,8 +234,7 @@ std::string qos_to_keyexpr(const rmw_qos_profile_t & qos);
 std::optional<rmw_qos_profile_t> keyexpr_to_qos(const std::string & keyexpr);
 }  // namespace liveliness
 
-///=============================================================================
-size_t hash_gid(const std::array<uint8_t, RMW_GID_STORAGE_SIZE> gid);
+using Gid = std::array<uint8_t, RMW_GID_STORAGE_SIZE>;
 }  // namespace rmw_zenoh_cpp
 
 ///=============================================================================
@@ -268,6 +267,28 @@ struct equal_to<rmw_zenoh_cpp::liveliness::ConstEntityPtr>
     const rmw_zenoh_cpp::liveliness::ConstEntityPtr & rhs) const -> bool
   {
     return lhs->keyexpr_hash() == rhs->keyexpr_hash();
+  }
+};
+
+template<>
+struct hash<rmw_zenoh_cpp::Gid>
+{
+  std::size_t operator()(const rmw_zenoh_cpp::Gid & gid) const noexcept
+  {
+    // This function implemented FNV-1a 64-bit as the GID is small enough (e.g. as of commit db4d05e
+    // of ros2/rmw RMW_GID_STORAGE_SIZE is set to 16) and FNV is known to be efficient in such cases.
+    //
+    // See https://github.com/ros2/rmw/blob/db4d05e/rmw/include/rmw/types.h#L44
+    // and https://datatracker.ietf.org/doc/html/draft-eastlake-fnv-17.html
+    static constexpr uint64_t FNV_OFFSET_BASIS_64 = 0x00000100000001b3;
+    static constexpr uint64_t FNV_PRIME_64 = 0xcbf29ce484222325;
+
+    uint64_t hash = FNV_OFFSET_BASIS_64;
+    for (const uint8_t & byte : gid) {
+      hash ^= byte;
+      hash *= FNV_PRIME_64;
+    }
+    return hash;
   }
 };
 }  // namespace std

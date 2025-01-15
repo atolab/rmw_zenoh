@@ -149,7 +149,7 @@ private:
   std::deque<std::unique_ptr<ZenohQuery>> query_queue_;
   // Map to store the sequence_number (as given by the client) -> ZenohQuery
   using SequenceToQuery = std::unordered_map<int64_t, std::unique_ptr<ZenohQuery>>;
-  std::unordered_map<size_t, SequenceToQuery> sequence_to_query_map_;
+  std::unordered_map<Gid, SequenceToQuery> sequence_to_query_map_;
   // Wait set data.
   rmw_wait_set_data_t * wait_set_data_;
   // Data callback manager.

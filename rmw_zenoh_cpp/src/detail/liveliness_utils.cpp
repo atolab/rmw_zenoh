@@ -442,7 +442,7 @@ Entity::Entity(
         sizeof(keyexpr_gid.high64));
 
   // We also hash the liveliness keyexpression into a size_t that we use to index into our maps.
-  this->keyexpr_hash_ = hash_gid(this->gid_);
+  this->keyexpr_hash_ = std::hash<Gid>{}(this->gid_);
 }
 
 ///=============================================================================
@@ -670,15 +670,4 @@ std::string demangle_name(const std::string & input)
   return output;
 }
 }  // namespace liveliness
-
-///=============================================================================
-size_t hash_gid(const std::array<uint8_t, RMW_GID_STORAGE_SIZE> gid)
-{
-  std::stringstream hash_str;
-  hash_str << std::hex;
-  for (const auto & g : gid) {
-    hash_str << static_cast<int>(g);
-  }
-  return std::hash<std::string>{}(hash_str.str());
-}
 }  // namespace rmw_zenoh_cpp
