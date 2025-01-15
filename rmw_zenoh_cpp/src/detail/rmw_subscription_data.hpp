@@ -138,8 +138,8 @@ private:
   std::shared_ptr<liveliness::Entity> entity_;
   // A shared session
   std::shared_ptr<zenoh::Session> sess_;
-  // An owned subscriber or querying_subscriber depending on the QoS settings.
-  std::optional<std::variant<zenoh::Subscriber<void>, zenoh::ext::QueryingSubscriber<void>>> sub_;
+  // An owned advanced subscriber.
+  std::optional<zenoh::ext::AdvancedSubscriber<void>> sub_;
   // Liveliness token for the subscription.
   std::optional<zenoh::LivelinessToken> token_;
   // Type support fields

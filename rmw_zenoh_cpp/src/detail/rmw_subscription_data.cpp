@@ -168,151 +168,62 @@ bool SubscriptionData::init()
 
   sess_ = context_impl->session();
 
+  auto adv_sub_opts = zenoh::ext::SessionExt::AdvancedSubscriberOptions::create_default();
+
   // Instantiate the subscription with suitable options depending on the
   // adapted_qos_profile.
   // TODO(Yadunund): Rely on a separate function to return the sub
   // as we start supporting more qos settings.
   if (entity_->topic_info()->qos_.durability == RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL) {
-    zenoh::ext::SessionExt::QueryingSubscriberOptions sub_options =
-      zenoh::ext::SessionExt::QueryingSubscriberOptions::create_default();
-    const std::string selector = "*/" + entity_->topic_info()->topic_keyexpr_;
-    zenoh::KeyExpr selector_ke(selector);
-    sub_options.query_keyexpr = std::move(selector_ke);
-    // Tell the PublicationCache's Queryable that the query accepts any key expression as a reply.
-    // By default a query accepts only replies that matches its query selector.
-    // This allows us to selectively query certain PublicationCaches when defining the
-    // set_querying_subscriber_callback below.
-    sub_options.query_accept_replies = ZC_REPLY_KEYEXPR_ANY;
-    // As this initial query is now using a "*", the query target is not COMPLETE.
-    sub_options.query_target = Z_QUERY_TARGET_ALL;
-    // We set consolidation to none as we need to receive transient local messages
-    // from a number of publishers. Eg: To receive TF data published over /tf_static
-    // by various publishers.
-    sub_options.query_consolidation =
-      zenoh::QueryConsolidation(zenoh::ConsolidationMode::Z_CONSOLIDATION_MODE_NONE);
+    // Allow this subscriber to be detected through liveliness.
+    adv_sub_opts.subscriber_detection = true;
+    adv_sub_opts.query_timeout_ms = std::numeric_limits<uint64_t>::max();
+    // History can only be retransmitted by Publishers that enable caching.
+    adv_sub_opts.history =
+      zenoh::ext::SessionExt::AdvancedSubscriberOptions::HistoryOptions::create_default();
+    adv_sub_opts.history->detect_late_publishers = true;
+    adv_sub_opts.history->max_samples = entity_->topic_info()->qos_.depth;
+    adv_sub_opts.recovery = zenoh::ext::SessionExt::AdvancedSubscriberOptions::RecoveryOptions{};
+    adv_sub_opts.recovery->periodic_queries_period_ms = 1000;
+  }
 
-    std::weak_ptr<SubscriptionData> data_wp = shared_from_this();
-    auto sub = context_impl->session()->ext().declare_querying_subscriber(
-      sub_ke,
-      [data_wp](const zenoh::Sample & sample) {
-        auto sub_data = data_wp.lock();
-        if (sub_data == nullptr) {
-          RMW_ZENOH_LOG_ERROR_NAMED(
-            "rmw_zenoh_cpp",
-            "Unable to obtain SubscriptionData from data for %s.",
-            std::string(sample.get_keyexpr().as_string_view()).c_str());
-          return;
-        }
-
-        auto attachment = sample.get_attachment();
-        if (!attachment.has_value()) {
-          RMW_ZENOH_LOG_ERROR_NAMED(
-            "rmw_zenoh_cpp",
-            "Unable to obtain attachment")
-          return;
-        }
-
-        auto attachment_value = attachment.value();
-        AttachmentData attachment_data(attachment_value);
-
-        sub_data->add_new_message(
-          std::make_unique<SubscriptionData::Message>(
-            sample.get_payload(),
-            get_system_time_in_ns(),
-            std::move(attachment_data)),
-          std::string(sample.get_keyexpr().as_string_view()));
-      },
-      zenoh::closures::none,
-      std::move(sub_options),
-      &result);
-    if (result != Z_OK) {
-      RMW_SET_ERROR_MSG("unable to create zenoh subscription");
-      return false;
-    }
-    sub_ = std::move(sub);
-
-    // Register the querying subscriber with the graph cache to get latest
-    // messages from publishers that were discovered after their first publication.
-    graph_cache_->set_querying_subscriber_callback(
-      entity_->topic_info().value().topic_keyexpr_,
-      entity_->keyexpr_hash(),
-      [data_wp](const std::string & queryable_prefix) -> void
-      {
-        auto sub_data = data_wp.lock();
-        if (sub_data == nullptr) {
-          RMW_ZENOH_LOG_ERROR_NAMED(
-            "rmw_zenoh_cpp",
-            "Unable to lock weak_ptr<SubscriptionData> within querying subscription callback."
-          );
-          return;
-        }
-        std::lock_guard<std::mutex> lock(sub_data->mutex_);
-
-        const std::string selector = queryable_prefix +
-        "/" +
-        sub_data->entity_->topic_info().value().topic_keyexpr_;
-        RMW_ZENOH_LOG_DEBUG_NAMED(
+  std::weak_ptr<SubscriptionData> data_wp = shared_from_this();
+  auto on_sample = [data_wp](const zenoh::Sample & sample) {
+      auto sub_data = data_wp.lock();
+      if (sub_data == nullptr) {
+        RMW_ZENOH_LOG_ERROR_NAMED(
           "rmw_zenoh_cpp",
-          "QueryingSubscriberCallback triggered over %s.",
-          selector.c_str()
+          "SubscriberCallback triggered over %s.",
+          std::string(sample.get_keyexpr().as_string_view()).c_str()
         );
-        zenoh::Session::GetOptions opts = zenoh::Session::GetOptions::create_default();
-        opts.timeout_ms = std::numeric_limits<uint64_t>::max();
-        opts.consolidation = zenoh::ConsolidationMode::Z_CONSOLIDATION_MODE_NONE;
-        opts.accept_replies = ZC_REPLY_KEYEXPR_ANY;
-
-        zenoh::ZResult result;
-        std::get<zenoh::ext::QueryingSubscriber<void>>(sub_data->sub_.value()).get(
-          zenoh::KeyExpr(selector),
-          std::move(opts),
-          &result);
-
-        if (result != Z_OK) {
-          RMW_SET_ERROR_MSG("unable to get querying subscriber.");
-          return;
-        }
+        return;
       }
-    );
-  } else {
-    zenoh::Session::SubscriberOptions sub_options =
-      zenoh::Session::SubscriberOptions::create_default();
-    std::weak_ptr<SubscriptionData> data_wp = shared_from_this();
-    zenoh::Subscriber<void> sub = context_impl->session()->declare_subscriber(
-      sub_ke,
-      [data_wp](const zenoh::Sample & sample) {
-        auto sub_data = data_wp.lock();
-        if (sub_data == nullptr) {
-          RMW_ZENOH_LOG_ERROR_NAMED(
-            "rmw_zenoh_cpp",
-            "Unable to lock weak_ptr<SubscriptionData> within querying subscription callback."
-          );
-          return;
-        }
-        auto attachment = sample.get_attachment();
-        if (!attachment.has_value()) {
-          RMW_ZENOH_LOG_ERROR_NAMED(
-            "rmw_zenoh_cpp",
-            "Unable to obtain attachment")
-          return;
-        }
-        auto attachment_value = attachment.value();
+      auto attachment = sample.get_attachment();
+      if (!attachment.has_value()) {
+        RMW_ZENOH_LOG_ERROR_NAMED(
+          "rmw_zenoh_cpp",
+          "Unable to obtain attachment")
+        return;
+      }
+      auto attachment_value = attachment.value();
 
-        AttachmentData attachment_data(attachment_value);
-        sub_data->add_new_message(
-          std::make_unique<SubscriptionData::Message>(
-            sample.get_payload(),
-            get_system_time_in_ns(),
-            std::move(attachment_data)),
-          std::string(sample.get_keyexpr().as_string_view()));
-      },
-      zenoh::closures::none,
-      std::move(sub_options),
-      &result);
-    if (result != Z_OK) {
-      RMW_SET_ERROR_MSG("unable to create zenoh subscription");
-      return false;
-    }
-    sub_ = std::move(sub);
+      AttachmentData attachment_data(attachment_value);
+      sub_data->add_new_message(
+        std::make_unique<SubscriptionData::Message>(
+          sample.get_payload(),
+          get_system_time_in_ns(),
+          std::move(attachment_data)),
+        std::string(sample.get_keyexpr().as_string_view()));
+    };
+  sub_ = context_impl->session()->ext().declare_advanced_subscriber(
+    sub_ke,
+    on_sample,
+    zenoh::closures::none,
+    std::move(adv_sub_opts),
+    &result);
+  if (result != Z_OK) {
+    RMW_SET_ERROR_MSG("unable to create zenoh subscription");
+    return false;
   }
 
   // Publish to the graph that a new subscription is in town.
@@ -386,11 +297,6 @@ rmw_ret_t SubscriptionData::shutdown()
     return ret;
   }
 
-  // Remove the registered callback from the GraphCache if any.
-  graph_cache_->remove_querying_subscriber_callback(
-    entity_->topic_info().value().topic_keyexpr_,
-    entity_->keyexpr_hash()
-  );
   // Remove any event callbacks registered to this subscription.
   graph_cache_->remove_qos_event_callbacks(entity_->keyexpr_hash());
 
@@ -405,27 +311,12 @@ rmw_ret_t SubscriptionData::shutdown()
   }
 
   if (sub_.has_value()) {
-    zenoh::Subscriber<void> * sub = std::get_if<zenoh::Subscriber<void>>(&sub_.value());
-    if (sub != nullptr) {
-      std::move(*sub).undeclare(&result);
-      if (result != Z_OK) {
-        RMW_ZENOH_LOG_ERROR_NAMED(
-          "rmw_zenoh_cpp",
-          "failed to undeclare sub.");
-        return RMW_RET_ERROR;
-      }
-    } else {
-      zenoh::ext::QueryingSubscriber<void> * sub =
-        std::get_if<zenoh::ext::QueryingSubscriber<void>>(&sub_.value());
-      if (sub != nullptr) {
-        std::move(*sub).undeclare(&result);
-        if (result != Z_OK) {
-          RMW_ZENOH_LOG_ERROR_NAMED(
-            "rmw_zenoh_cpp",
-            "failed to undeclare querying sub.");
-          return RMW_RET_ERROR;
-        }
-      }
+    std::move(sub_.value()).undeclare(&result);
+    if (result != Z_OK) {
+      RMW_ZENOH_LOG_ERROR_NAMED(
+        "rmw_zenoh_cpp",
+        "failed to undeclare sub.");
+      return RMW_RET_ERROR;
     }
   }
 

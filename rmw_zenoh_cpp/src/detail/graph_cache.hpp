@@ -104,8 +104,6 @@ public:
   /// @brief Signature for a function that will be invoked by the GraphCache when a QoS
   ///   event is detected.
   using GraphCacheEventCallback = std::function<void (int32_t change)>;
-  /// Callback to be triggered when a publication cache is detected in the ROS Graph.
-  using QueryingSubscriberCallback = std::function<void (const std::string & queryable_prefix)>;
 
   /// @brief Constructor
   /// @param id The id of the zenoh session that is building the graph cache.
@@ -188,15 +186,6 @@ public:
 
   /// Returns true if the entity is a publisher or client. False otherwise.
   static bool is_entity_pub(const liveliness::Entity & entity);
-
-  void set_querying_subscriber_callback(
-    const std::string & sub_keyexpr,
-    const std::size_t sub_keyexpr_hash,
-    QueryingSubscriberCallback cb);
-
-  void remove_querying_subscriber_callback(
-    const std::string & sub_keyexpr,
-    const std::size_t sub_keyexpr_hash);
 
 private:
   // Helper function to convert an Entity into a GraphNode.
@@ -287,9 +276,6 @@ private:
   using GraphEventCallbackMap = std::unordered_map<std::size_t, GraphEventCallbacks>;
   // EventCallbackMap for each type of event we support in rmw_zenoh_cpp.
   GraphEventCallbackMap event_callbacks_;
-  // Map key expressions to a map of sub keyexpr_hash and QueryingSubscriberCallback.
-  std::unordered_map<std::string, std::unordered_map<std::size_t,
-    QueryingSubscriberCallback>> querying_subs_cbs_;
   std::mutex events_mutex_;
 
   // Mutex to lock before modifying the members above.
