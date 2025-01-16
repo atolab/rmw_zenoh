@@ -1,0 +1,1 @@
+# zenoh security configuration

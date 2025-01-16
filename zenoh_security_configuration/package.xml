@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>zenoh_security_configuration</name>
+  <version>0.3.0</version>
+  <description>This package generates zenoh secutiry configurations</description>
+  <maintainer email="alejandro@openrobotics.org">Alejandro Hernanadez</maintainer>
+  <license>Apache License 2.0</license>
+
+  <depend>python3-jsonschema</depend>
+  <depend>python3-yaml</depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
