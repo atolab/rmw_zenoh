@@ -40,7 +40,8 @@ public:
   // check has not succeeded.
   rmw_context_impl_s(
     const std::size_t domain_id,
-    const std::string & enclave);
+    const std::string & enclave,
+    const rmw_security_options_t * security_options);
 
   ~rmw_context_impl_s();
 

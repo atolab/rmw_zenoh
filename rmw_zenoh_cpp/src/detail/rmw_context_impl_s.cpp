@@ -37,6 +37,7 @@
 
 #include "rcpputils/scope_exit.hpp"
 #include "rmw/error_handling.h"
+#include "rmw_dds_common/security.hpp"
 #include "zenoh_utils.hpp"
 
 // Megabytes of SHM to reserve.
@@ -52,7 +53,8 @@ public:
   // Constructor.
   Data(
     std::size_t domain_id,
-    const std::string & enclave)
+    const std::string & enclave,
+    const rmw_security_options_t * security_options)
   : domain_id_(std::move(domain_id)),
     enclave_(std::move(enclave)),
     is_shutdown_(false),
@@ -67,7 +69,16 @@ public:
     if (!config.has_value()) {
       throw std::runtime_error("Error configuring Zenoh session.");
     }
-
+#ifdef HAVE_SECURITY
+    std::unordered_map<std::string, std::string> security_files_paths;
+    if (rmw_dds_common::get_security_files(
+        true, "", security_options->security_root_path, security_files_paths))
+    {
+      // TODO(ahcorde): Fill this
+    } else {
+      std::cout << "Error getting secutiry data" << std::endl;
+    }
+#endif
     zenoh::ZResult result;
 
 #ifndef _MSC_VER
@@ -432,9 +443,10 @@ private:
 ///=============================================================================
 rmw_context_impl_s::rmw_context_impl_s(
   const std::size_t domain_id,
-  const std::string & enclave)
+  const std::string & enclave,
+  const rmw_security_options_t * security_options)
 {
-  data_ = std::make_shared<Data>(domain_id, std::move(enclave));
+  data_ = std::make_shared<Data>(domain_id, std::move(enclave), security_options);
   data_->init();
 }
 

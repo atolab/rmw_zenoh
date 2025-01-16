@@ -110,7 +110,8 @@ rmw_init(const rmw_init_options_t * options, rmw_context_t * context)
     return RMW_RET_BAD_ALLOC,
     rmw_context_impl_t,
     context->actual_domain_id,
-    std::string(options->enclave)
+    std::string(options->enclave),
+    &context->options.security_options
   );
 
   free_options.cancel();
