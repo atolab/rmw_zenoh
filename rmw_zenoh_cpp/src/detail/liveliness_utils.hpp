@@ -275,8 +275,9 @@ struct hash<rmw_zenoh_cpp::Gid>
 {
   std::size_t operator()(const rmw_zenoh_cpp::Gid & gid) const noexcept
   {
-    // This function implemented FNV-1a 64-bit as the GID is small enough (e.g. as of commit db4d05e
-    // of ros2/rmw RMW_GID_STORAGE_SIZE is set to 16) and FNV is known to be efficient in such cases.
+    // This function implemented FNV-1a 64-bit as the GID is small enough
+    // (e.g. as of commit db4d05e of ros2/rmw RMW_GID_STORAGE_SIZE is set to 16)
+    // and FNV is known to be efficient in such cases.
     //
     // See https://github.com/ros2/rmw/blob/db4d05e/rmw/include/rmw/types.h#L44
     // and https://datatracker.ietf.org/doc/html/draft-eastlake-fnv-17.html
