@@ -346,12 +346,11 @@ rmw_ret_t ServiceData::take_request(
   request_header->received_timestamp = query->get_received_timestamp();
 
   // Add this query to the map, so that rmw_send_response can quickly look it up later.
-  const size_t hash = rmw_zenoh_cpp::hash_gid(writer_guid);
-  std::unordered_map<size_t, SequenceToQuery>::iterator it = sequence_to_query_map_.find(hash);
+  std::unordered_map<Gid, SequenceToQuery>::iterator it = sequence_to_query_map_.find(writer_guid);
   if (it == sequence_to_query_map_.end()) {
     SequenceToQuery stq;
-    sequence_to_query_map_.insert(std::make_pair(hash, std::move(stq)));
-    it = sequence_to_query_map_.find(hash);
+    sequence_to_query_map_.insert(std::make_pair(writer_guid, std::move(stq)));
+    it = sequence_to_query_map_.find(writer_guid);
   } else {
     // Client already in the map
     if (it->second.find(request_header->request_id.sequence_number) != it->second.end()) {
@@ -380,12 +379,11 @@ rmw_ret_t ServiceData::send_response(
     return RMW_RET_OK;
   }
 
-  std::array<uint8_t, RMW_GID_STORAGE_SIZE> writer_guid;
+  Gid writer_guid;
   memcpy(writer_guid.data(), request_id->writer_guid, RMW_GID_STORAGE_SIZE);
 
   // Create the queryable payload
-  const size_t hash = hash_gid(writer_guid);
-  std::unordered_map<size_t, SequenceToQuery>::iterator it = sequence_to_query_map_.find(hash);
+  std::unordered_map<Gid, SequenceToQuery>::iterator it = sequence_to_query_map_.find(writer_guid);
   if (it == sequence_to_query_map_.end()) {
     // If there is no data associated with this request, the higher layers of
     // ROS 2 seem to expect that we just silently return with no work.
@@ -399,8 +397,8 @@ rmw_ret_t ServiceData::send_response(
   }
   std::unique_ptr<ZenohQuery> query = std::move(query_it->second);
   it->second.erase(query_it);
-  if (sequence_to_query_map_[hash].size() == 0) {
-    sequence_to_query_map_.erase(hash);
+  if (sequence_to_query_map_[writer_guid].size() == 0) {
+    sequence_to_query_map_.erase(writer_guid);
   }
 
   rcutils_allocator_t * allocator = &(rmw_node_->context->options.allocator);
