@@ -1,0 +1,43 @@
+version: '3.2'
+services:
+  router:
+    build:
+      context: .
+    image: zenoh:latest
+    stdin_open: true
+    tty: true
+    container_name: router_container
+    command: router
+    volumes:
+    - /dev/shm:/dev/shm
+    network_mode: host
+
+
+  talker:
+    build:
+      context: .
+    image: zenoh:latest
+    stdin_open: true
+    tty: true
+    container_name: talker_container
+    command: talker
+    volumes:
+    - /dev/shm:/dev/shm
+    network_mode: host
+    depends_on:
+    - router
+    
+  listener:
+    build:
+      context: .
+    image: zenoh:latest
+    stdin_open: true
+    tty: true
+    container_name: listener_container
+    command: listener
+    volumes:
+    - /dev/shm:/dev/shm
+    network_mode: host
+    depends_on:
+    - router
+
