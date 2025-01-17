@@ -434,3 +434,20 @@ Thus, there is no direct implementation of actions in `rmw_zenoh_cpp`.
 ## Security
 
 TBD
+
+## Environment variables
+
+### `RMW_ZENOH_BUFFER_POOL_MAX_SIZE_BYTES`
+
+The RMW recycles serialization buffers on transmission using a buffer pool with bounded memory
+usage. These buffers are returned to the pool — without being deallocated — once they cross the
+network boundary in host-to-host communication, or after transmission in inter-process
+communication, or upon being consumed by subscriptions in intra-process communication, etc. 
+
+When the total size of the allocated buffers within the pool exceeds
+`RMW_ZENOH_BUFFER_POOL_MAX_SIZE_BYTES`, serialization buffers are allocated using the system
+allocator and moved to Zenoh; no recyling is performed in this case to prevent the buffer pool from
+growing uncontrollably. 
+
+The default value of `RMW_ZENOH_BUFFER_POOL_MAX_SIZE_BYTES` is roughly proportionate to the cache
+size of a typical modern CPU.
