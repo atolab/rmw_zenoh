@@ -33,6 +33,7 @@
 #include "liveliness_utils.hpp"
 #include "message_type_support.hpp"
 #include "attachment_helpers.hpp"
+#include "shm_context.hpp"
 #include "type_support_common.hpp"
 #include "zenoh_utils.hpp"
 

@@ -532,9 +532,7 @@
       /// A probing procedure for shared memory is performed upon session opening. To enable zenoh to operate
       /// over shared memory (and to not fallback on network mode), shared memory needs to be enabled also on the
       /// subscriber side. By doing so, the probing procedure will succeed and shared memory will operate as expected.
-      ///
-      /// ROS setting: disabled by default until fully tested
-      enabled: false,
+      enabled: true,
     },
     auth: {
       /// The configuration of authentication.

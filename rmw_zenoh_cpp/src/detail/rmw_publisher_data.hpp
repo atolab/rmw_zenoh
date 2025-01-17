@@ -28,6 +28,7 @@
 #include "event.hpp"
 #include "liveliness_utils.hpp"
 #include "message_type_support.hpp"
+#include "shm_context.hpp"
 #include "type_support_common.hpp"
 #include "zenoh_utils.hpp"
 
@@ -56,13 +57,19 @@ public:
 
   // Publish a ROS message.
   rmw_ret_t publish(
-    const void * ros_message,
-    std::optional<zenoh::ShmProvider> & shm_provider);
+    const void * ros_message
+#ifdef RMW_ZENOH_BUILD_WITH_SHARED_MEMORY
+    , const std::optional<ShmContext> & shm
+#endif
+  );
 
   // Publish a serialized ROS message.
   rmw_ret_t publish_serialized_message(
-    const rmw_serialized_message_t * serialized_message,
-    std::optional<zenoh::ShmProvider> & shm_provider);
+    const rmw_serialized_message_t * serialized_message
+#ifdef RMW_ZENOH_BUILD_WITH_SHARED_MEMORY
+    , const std::optional<ShmContext> & shm
+#endif
+  );
 
   // Get a copy of the keyexpr_hash of this PublisherData's liveliness::Entity.
   std::size_t keyexpr_hash() const;
